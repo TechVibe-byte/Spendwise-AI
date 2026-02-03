@@ -29,6 +29,11 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [monthlyBudget, setMonthlyBudget] = useState<number>(() => {
+    const saved = localStorage.getItem('spendwise-budget');
+    return saved ? parseFloat(saved) : 50000;
+  });
+
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('spendwise-theme');
     if (savedTheme) return savedTheme === 'dark';
@@ -37,6 +42,8 @@ const App: React.FC = () => {
 
   const [showForm, setShowForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [editingRecurring, setEditingRecurring] = useState<RecurringExpense | null>(null);
+  
   const [showOnboarding, setShowOnboarding] = useState(() => {
     return !localStorage.getItem('spendwise-onboarded');
   });
@@ -82,6 +89,10 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('spendwise-custom-categories', JSON.stringify(customCategories));
   }, [customCategories]);
+
+  useEffect(() => {
+    localStorage.setItem('spendwise-budget', monthlyBudget.toString());
+  }, [monthlyBudget]);
 
   // Theme management
   useEffect(() => {
@@ -161,6 +172,25 @@ const App: React.FC = () => {
         e.id === editingExpense.id ? { ...newExpenseData, id: e.id, recurringId: e.recurringId } : e
       ));
       setEditingExpense(null);
+    } else if (editingRecurring) {
+      if (recurringInfo) {
+        // Update existing recurring rule
+        setRecurringExpenses(prev => prev.map(r => r.id === editingRecurring.id ? {
+            ...r,
+            amount: newExpenseData.amount,
+            description: newExpenseData.description,
+            category: newExpenseData.category,
+            bankName: newExpenseData.bankName,
+            frequency: recurringInfo.frequency,
+            nextOccurrenceDate: newExpenseData.date, // User updated the date, treating it as next due
+        } : r));
+      } else {
+        // User unchecked recurring, convert to one-time expense and remove rule
+        const id = Math.random().toString(36).substr(2, 9);
+        setExpenses(prev => [{ ...newExpenseData, id }, ...prev]);
+        setRecurringExpenses(prev => prev.filter(r => r.id !== editingRecurring.id));
+      }
+      setEditingRecurring(null);
     } else {
       const id = Math.random().toString(36).substr(2, 9);
       const expense: Expense = { ...newExpenseData, id };
@@ -196,6 +226,11 @@ const App: React.FC = () => {
 
   const handleEditExpense = (expense: Expense) => {
     setEditingExpense(expense);
+    setShowForm(true);
+  };
+
+  const handleEditRecurring = (rule: RecurringExpense) => {
+    setEditingRecurring(rule);
     setShowForm(true);
   };
 
@@ -277,6 +312,7 @@ const App: React.FC = () => {
   const closeForm = () => {
     setShowForm(false);
     setEditingExpense(null);
+    setEditingRecurring(null);
   };
 
   const NavItems = () => (
@@ -444,7 +480,7 @@ const App: React.FC = () => {
                   </div>
                 </header>
                 
-                <Dashboard expenses={expenses} categories={allCategories} />
+                <Dashboard expenses={expenses} categories={allCategories} monthlyBudget={monthlyBudget} />
                 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                   <div className="lg:col-span-2">
@@ -494,6 +530,7 @@ const App: React.FC = () => {
                 <RecurringManager 
                   recurringExpenses={recurringExpenses} 
                   onDelete={deleteRecurring} 
+                  onEdit={handleEditRecurring}
                   onToggle={toggleRecurring}
                   categories={allCategories}
                 />
@@ -510,7 +547,16 @@ const App: React.FC = () => {
               </div>
             } />
             <Route path="/settings" element={
-              <Settings />
+              <Settings 
+                expenses={expenses}
+                setExpenses={setExpenses}
+                recurringExpenses={recurringExpenses}
+                setRecurringExpenses={setRecurringExpenses}
+                customCategories={customCategories}
+                setCustomCategories={setCustomCategories}
+                monthlyBudget={monthlyBudget}
+                setMonthlyBudget={setMonthlyBudget}
+              />
             } />
           </Routes>
         </main>
@@ -520,9 +566,20 @@ const App: React.FC = () => {
           <ExpenseForm 
             onAdd={handleSaveExpense} 
             onClose={closeForm}
-            initialExpense={editingExpense || undefined}
+            initialExpense={editingExpense || (editingRecurring ? {
+              id: editingRecurring.id,
+              amount: editingRecurring.amount,
+              description: editingRecurring.description,
+              category: editingRecurring.category,
+              date: editingRecurring.nextOccurrenceDate,
+              bankName: editingRecurring.bankName
+            } : undefined)}
+            initialRecurringFrequency={editingRecurring?.frequency}
             categories={allCategories}
-            onSwitchToAdd={() => setEditingExpense(null)}
+            onSwitchToAdd={() => {
+              setEditingExpense(null);
+              setEditingRecurring(null);
+            }}
           />
         )}
       </div>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 
 interface OnboardingProps {
@@ -29,8 +30,8 @@ const ONBOARDING_STEPS = [
     )
   },
   {
-    title: "Automated Payments",
-    description: "Easily set up recurring expenses for rent, bills, or loans. We'll handle the tracking for you automatically.",
+    title: "Recurring Expenses",
+    description: "Automate your bills! When adding an expense, simply toggle 'Set as recurring payment' at the bottom of the form and choose a frequency.",
     icon: (
       <div className="w-24 h-24 bg-amber-500 rounded-3xl flex items-center justify-center shadow-xl shadow-amber-200 dark:shadow-none mx-auto mb-8">
         <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +93,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         </button>
 
         <div className="p-10 pt-20 text-center">
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500" key={currentStep}>
             {step.icon}
             <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-4 tracking-tight leading-tight">
               {step.title}

@@ -11,9 +11,10 @@ import { formatCurrency } from '../utils';
 interface DashboardProps {
   expenses: Expense[];
   categories: CategoryItem[];
+  monthlyBudget: number;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ expenses, categories }) => {
+const Dashboard: React.FC<DashboardProps> = ({ expenses, categories, monthlyBudget }) => {
   const isDark = window.document.documentElement.classList.contains('dark');
   
   const getCategoryColor = (name: string) => {
@@ -108,11 +109,13 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, categories }) => {
         </div>
         <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
           <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm font-medium">Monthly Budget</p>
-          <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mt-1">{formatCurrency(50000)}</h3>
+          <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mt-1">{formatCurrency(monthlyBudget)}</h3>
           <div className="mt-4 w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
             <div 
-              className="bg-blue-500 dark:bg-blue-600 h-full rounded-full transition-all duration-500" 
-              style={{ width: `${Math.min((totalSpent / 50000) * 100, 100)}%` }}
+              className={`h-full rounded-full transition-all duration-500 ${
+                totalSpent > monthlyBudget ? 'bg-red-500' : 'bg-blue-500 dark:bg-blue-600'
+              }`}
+              style={{ width: `${Math.min((totalSpent / monthlyBudget) * 100, 100)}%` }}
             />
           </div>
         </div>

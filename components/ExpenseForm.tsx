@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Expense, Category, RecurringFrequency, CategoryItem, DefaultCategory } from '../types';
 import { getCategoryIcon } from '../constants';
@@ -6,6 +7,7 @@ interface ExpenseFormProps {
   onAdd: (expense: Omit<Expense, 'id'>, recurringInfo?: { frequency: RecurringFrequency }) => void;
   onClose: () => void;
   initialExpense?: Expense;
+  initialRecurringFrequency?: RecurringFrequency;
   categories: CategoryItem[];
   onSwitchToAdd?: () => void;
 }
@@ -19,7 +21,7 @@ const COMMON_BANKS = [
   "Flipkart Pay Later", "Lazypay", "ZestMoney", "Simpl", "mPokket", "Cashe"
 ];
 
-const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, onClose, initialExpense, categories, onSwitchToAdd }) => {
+const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, onClose, initialExpense, initialRecurringFrequency, categories, onSwitchToAdd }) => {
   const [description, setDescription] = useState(initialExpense?.description || '');
   const [amount, setAmount] = useState(initialExpense?.amount.toString() || '');
   const [category, setCategory] = useState<Category>(initialExpense?.category || DefaultCategory.OTHER);
@@ -46,7 +48,13 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, onClose, initialExpens
       setBankName(initialExpense.bankName || '');
       setDate(initialExpense.date);
       setReceiptImage(initialExpense.receiptImage || null);
-      setIsRecurring(false); // Reset recurring toggle when loading an existing expense
+      
+      if (initialRecurringFrequency) {
+        setIsRecurring(true);
+        setFrequency(initialRecurringFrequency);
+      } else {
+        setIsRecurring(false);
+      }
       setUserHasManuallySetCategory(false);
     } else {
       // Reset form to default "Add New" state
@@ -61,7 +69,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, onClose, initialExpens
       setShowBankSuggestions(false);
       setUserHasManuallySetCategory(false);
     }
-  }, [initialExpense]);
+  }, [initialExpense, initialRecurringFrequency]);
 
   const handleImageCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
